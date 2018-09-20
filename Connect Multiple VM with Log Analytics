@@ -1,0 +1,42 @@
+$workspaceName = "<Name>"
+$resourcegroup = "<RG>"
+
+$workspace = Get-AzureRmOperationalInsightsWorkspace -Name $workspaceName -ResourceGroupName $resourcegroup
+ 
+If ($workspace.Name -ne $workspaceName) {
+Write-Error "Unable to find OMS Workspace $workspaceName."
+}
+ 
+$workspaceId = "<ID>"
+$workspaceKey = "<Key>"
+$location = "<Location>" 
+
+ 
+$importvmlist = import-csv "./File.csv" 
+
+
+
+foreach ($vmlist in $importvmlist) {
+
+$vmname = $($vmlist.Name)
+
+$resourcegroupname = $($vmlist.resourcegroupname)
+
+        
+foreach ($vm in $vmname) {
+
+foreach ($vmresourcegroup in $resourcegroupname) {
+
+if ($VM -like 'VM1*') {
+ 
+    Set-AzureRmVMExtension -ResourceGroupName $vmresourcegroup -VMName $vm -Name "MicrosoftMonitoringAgent" -Location $location -Publisher "Microsoft.EnterpriseCloud.Monitoring" -ExtensionType "MicrosoftMonitoringAgent" -TypeHandlerVersion "1.0" -SettingString "{'workspaceId': '$workspaceId'}" -ProtectedSettingString "{'workspaceKey': '$workspaceKey'}"
+                      }
+
+Elseif ($VM -like 'VM2*') {
+
+     Set-AzureRmVMExtension -ResourceGroupName $vmresourcegroup -VMName $vm -Name "OmsAgentForLinux" -Location $location -Publisher "Microsoft.EnterpriseCloud.Monitoring" -ExtensionType "OmsAgentForLinux" -TypeHandlerVersion "1.7" -SettingString "{'workspaceId': '$workspaceId'}" -ProtectedSettingString "{'workspaceKey': '$workspaceKey'}"
+                          }
+
+                    }
+         }
+}
