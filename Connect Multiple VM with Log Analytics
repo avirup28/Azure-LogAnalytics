@@ -1,42 +1,53 @@
-$workspaceName = "<Name>"
-$resourcegroup = "<RG>"
 
-$workspace = Get-AzureRmOperationalInsightsWorkspace -Name $workspaceName -ResourceGroupName $resourcegroup
- 
-If ($workspace.Name -ne $workspaceName) {
-Write-Error "Unable to find OMS Workspace $workspaceName."
-}
- 
-$workspaceId = "<ID>"
-$workspaceKey = "<Key>"
-$location = "<Location>" 
+$ResourceGroups = Get-AzureRmResourceGroup
+ 
+ForEach ($ResourceGroup in $ResourceGroups) {
+ 
+ 
 
- 
-$importvmlist = import-csv "./File.csv" 
+[array]$VMSmindtree = Get-AzureRMVm -Status | Where-Object {$PSItem.PowerState -eq "VM running" -and $PSItem.Tags.Keys -eq "Technical_Agency" -and $PSItem.Tags.Values -eq "Value"} | Select Name , ResourceGroupName , Location
+
+foreach ($VMmindtree in $VMSmindtree) {
+
+    $Name = $VMmindtree.Name
+    $RG = $VMmindtree.ResourceGroupName
+    $Loc = $VMmindtree.Location
+    $Ext = (Get-AzureRmVM -ResourceGroupName $RG -Name $Name).Extensions
+
+    $WksName = "Name"
+    $WksId = "ID"
+    $WksKey = "Key"
+   
+if ($Name -like 'AZW*') {
+
+    if ($Ext.Name -notcontains "MicrosoftMonitoringAgent" ) {
 
 
+        Set-AzureRmVMExtension -ResourceGroupName $RG -VMName $Name -Name "OmsExtension" -Location $Loc -Publisher "Microsoft.EnterpriseCloud.Monitoring" -ExtensionType "MicrosoftMonitoringAgent" -TypeHandlerVersion "1.0" -SettingString "{'workspaceId': '$WksId'}" -ProtectedSettingString "{'workspaceKey': '$WksKey'}"
+        Write-Host "$Name connected to Log Analytics $WksName"
 
-foreach ($vmlist in $importvmlist) {
+                                                            }
 
-$vmname = $($vmlist.Name)
+    else { Write-Host "$Name is already a part of Log Analytics $WksName" }
 
-$resourcegroupname = $($vmlist.resourcegroupname)
-
+                            }
         
-foreach ($vm in $vmname) {
 
-foreach ($vmresourcegroup in $resourcegroupname) {
+if ($Name -like 'AZL*') {
 
-if ($VM -like 'VM1*') {
- 
-    Set-AzureRmVMExtension -ResourceGroupName $vmresourcegroup -VMName $vm -Name "MicrosoftMonitoringAgent" -Location $location -Publisher "Microsoft.EnterpriseCloud.Monitoring" -ExtensionType "MicrosoftMonitoringAgent" -TypeHandlerVersion "1.0" -SettingString "{'workspaceId': '$workspaceId'}" -ProtectedSettingString "{'workspaceKey': '$workspaceKey'}"
-                      }
 
-Elseif ($VM -like 'VM2*') {
+      if ($Ext.Name -notcontains "OmsAgentForLinux") {
 
-     Set-AzureRmVMExtension -ResourceGroupName $vmresourcegroup -VMName $vm -Name "OmsAgentForLinux" -Location $location -Publisher "Microsoft.EnterpriseCloud.Monitoring" -ExtensionType "OmsAgentForLinux" -TypeHandlerVersion "1.7" -SettingString "{'workspaceId': '$workspaceId'}" -ProtectedSettingString "{'workspaceKey': '$workspaceKey'}"
-                          }
 
-                    }
-         }
-}
+            Set-AzureRmVMExtension -ResourceGroupName $RG -VMName $Name -Name "OmsExtension" -Location $Loc -Publisher "Microsoft.EnterpriseCloud.Monitoring" -ExtensionType "OmsAgentForLinux" -TypeHandlerVersion "1.7" -SettingString "{'workspaceId': '$MWksId'}" -ProtectedSettingString "{'workspaceKey': '$MWkskey'}"
+            Write-Host "$Name connected to Log Analytics $WksName"
+
+                                                      }
+
+       else { Write-Host "$Name is already a part of Log Analytics $WksName" }
+
+
+                           }
+
+                                     }
+                 }
