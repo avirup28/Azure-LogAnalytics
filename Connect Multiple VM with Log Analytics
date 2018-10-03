@@ -1,9 +1,6 @@
-
-$ResourceGroups = Get-AzureRmResourceGroup
- 
-ForEach ($ResourceGroup in $ResourceGroups) {
- 
- 
+    $WksName = "Name"
+    $WksId = "ID"
+    $WksKey = "Key"
 
 [array]$VMSmindtree = Get-AzureRMVm -Status | Where-Object {$PSItem.PowerState -eq "VM running" -and $PSItem.Tags.Keys -eq "Technical_Agency" -and $PSItem.Tags.Values -eq "Value"} | Select Name , ResourceGroupName , Location
 
@@ -14,13 +11,11 @@ foreach ($VMmindtree in $VMSmindtree) {
     $Loc = $VMmindtree.Location
     $Ext = (Get-AzureRmVM -ResourceGroupName $RG -Name $Name).Extensions
 
-    $WksName = "Name"
-    $WksId = "ID"
-    $WksKey = "Key"
+
    
 if ($Name -like 'AZW*') {
 
-    if ($Ext.Name -notcontains "MicrosoftMonitoringAgent" ) {
+    if ($Ext.Name -notcontains "MicrosoftMonitoringAgent") {
 
 
         Set-AzureRmVMExtension -ResourceGroupName $RG -VMName $Name -Name "OmsExtension" -Location $Loc -Publisher "Microsoft.EnterpriseCloud.Monitoring" -ExtensionType "MicrosoftMonitoringAgent" -TypeHandlerVersion "1.0" -SettingString "{'workspaceId': '$WksId'}" -ProtectedSettingString "{'workspaceKey': '$WksKey'}"
@@ -50,4 +45,4 @@ if ($Name -like 'AZL*') {
                            }
 
                                      }
-                 }
+                 
